@@ -1,10 +1,3 @@
-[project]
-name = "conflagrate"
-description = "A framework for writing applications with control flow graphs"
-version = "0.0.1"
-authors = [
-    { name = "Jeffrey Bouas", email = "ignirtoq+conflagrate@gmail.com" }
-]
-
-[dependencies]
-pydot = "^1.4.2"
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
