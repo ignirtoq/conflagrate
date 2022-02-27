@@ -1,0 +1,12 @@
+strict digraph {
+  node[shape=box]
+
+  start[label="Get Name",type=salutation]
+  matcher[label="Check Name",type=matcher,branch=matcher]
+  welcome1[label="Special Greeting",type=special_greeting]
+  welcome2[label="Generic Greeting",type=generic_greeting]
+
+  start->matcher
+  matcher->welcome1[label=1,value=1]
+  matcher->welcome2[label=2,value=2]
+}

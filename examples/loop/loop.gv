@@ -1,0 +1,11 @@
+strict digraph {
+  node[shape=box]
+
+  start[label="Get Directive",type=get_directive]
+  exit_check[label="Check for exit",type=matcher,branch=matcher]
+  exit[label="Special Greeting",type=exit]
+
+  start->exit_check
+  exit_check->start[label=continue,value=continue]
+  exit_check->exit[label=exit,value=exit]
+}

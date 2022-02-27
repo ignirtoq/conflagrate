@@ -1,0 +1,8 @@
+strict digraph {
+  node[shape=box]
+
+  start[label="Get Name",type=salutation]
+  welcome[label="Greeting",type=greeting]
+
+  start->welcome
+}
