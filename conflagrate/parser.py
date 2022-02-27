@@ -4,9 +4,8 @@ import pydot
 from typing import Dict, List, Tuple, Type, Union
 
 from .controlflow import BranchType
-from .registration import NodeType, get_nodetypes, MatcherNodeType
+from .registration import MatcherNodeType, NodeType, get_nodetypes
 
-__all__ = []
 
 MATCH_VALUE_ATTRIBUTE = 'value'
 NODE_TYPE_ATTRIBUTE = 'type'
@@ -28,8 +27,11 @@ class Node:
     def get_output_data(self, callable_output):
         return callable_output
 
+    def has_next_node(self):
+        return bool(self.edges)
+
     def get_next_node(self, callable_output):
-        return self.edges
+        return [self.edges]
 
 
 @dataclass
@@ -41,7 +43,7 @@ class MatcherNode(Node):
         return callable_output[1]
 
     def get_next_node(self, callable_output):
-        return self.edges[callable_output[0]]
+        return [self.edges[callable_output[0]]]
 
 
 _nodetype_to_node_type: Dict[Type[NodeType], Type[Node]] = {
