@@ -1,4 +1,3 @@
-from collections import defaultdict
 from dataclasses import dataclass, field
 import pydot
 from typing import Dict, List, Tuple, Type, Union
@@ -31,7 +30,7 @@ class Node:
         return bool(self.edges)
 
     def get_next_node(self, callable_output):
-        return [self.edges]
+        return self.edges
 
 
 @dataclass
@@ -91,9 +90,14 @@ def add_edges_to_nodes(
         dot_edges: List[pydot.Edge],
         nodes: Dict[str, Node]
 ) -> None:
-    node_to_edge_dict: Dict[Node, Union[Node, Dict[str, Node]]] = (
-        defaultdict(dict)
-    )
+    node_to_edge_dict: Dict[Node, Union[List[Node], Dict[str, Node]]] = {}
+
+    for node in nodes.values():
+        if node.nodetype.branchtype == BranchType.matcher:
+            node_to_edge_dict[node] = {}
+        else:
+            node_to_edge_dict[node] = []
+
     for dot_edge in dot_edges:
         source, destination = get_source_destination_nodes_from_edge(
             dot_edge, nodes)
@@ -106,7 +110,7 @@ def add_edges_to_nodes(
             match_value = dot_edge.get(MATCH_VALUE_ATTRIBUTE)
             node_to_edge_dict[source][match_value] = destination
         else:
-            node_to_edge_dict[source] = destination
+            node_to_edge_dict[source].append(destination)
 
     for node, edges in node_to_edge_dict.items():
         node.edges = edges

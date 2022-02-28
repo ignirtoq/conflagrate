@@ -1,0 +1,10 @@
+strict digraph {
+  node[shape=box]
+
+  start[label="Get Name",type=salutation]
+  welcome1[label="First Greeting",type=first_greeting]
+  welcome2[label="Second Greeting",type=second_greeting]
+
+  start->welcome1
+  start->welcome2
+}
