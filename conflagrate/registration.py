@@ -1,39 +1,9 @@
-from dataclasses import dataclass
 from typing import Any, Callable, Dict, Tuple, Type
 
-from .asyncutils import make_awaitable
 from .controlflow import BranchType
+from .graph import MatcherNodeType, NodeType
 
 __all__ = ['nodetype']
-
-
-@dataclass
-class NodeType:
-    """
-    An association of an executable block of code with a type of node that
-    can appear in a control flow graph.  An individual block of code may
-    be associated with more than one node in a graph.
-    """
-    callable: Callable
-    branchtype: BranchType
-    input_datatype: Tuple
-    output_datatype: Tuple
-
-    def __call__(self, *args, **kwargs):
-        return make_awaitable(self.callable, *args, **kwargs)
-
-
-@dataclass
-class MatcherNodeType(NodeType):
-    """
-    An association of an executable block of code with a type of node that
-    can appear in a control flow graph.  The Matcher variation supports
-    branching to multiple nodes further in the graph.  The code block is
-    expected to emit a "match value" that is compared to values denoted for
-    each branch.  The matching branch is then selected for the next execution.
-    """
-    pass
-
 
 _node_types: Dict[str, NodeType] = {}
 

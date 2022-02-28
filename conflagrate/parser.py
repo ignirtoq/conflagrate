@@ -1,59 +1,17 @@
-from dataclasses import dataclass, field
 import pydot
 from typing import Dict, List, Tuple, Type, Union
 
 from .controlflow import BranchType
-from .registration import MatcherNodeType, NodeType, get_nodetypes
-
+from .graph import Graph, MatcherNode, MatcherNodeType, Node, NodeType
+from .registration import get_nodetypes
 
 MATCH_VALUE_ATTRIBUTE = 'value'
 NODE_TYPE_ATTRIBUTE = 'type'
-
-
-@dataclass
-class Node:
-    name: str
-    typename: str
-    nodetype: NodeType
-    edges: Union['Node', Dict[str, 'Node']] = field(default_factory=dict)
-
-    def __hash__(self):
-        return hash(self.name)
-
-    def __call__(self, *args, **kwargs):
-        return self.nodetype(*args, **kwargs)
-
-    def get_output_data(self, callable_output):
-        return callable_output
-
-    def has_next_node(self):
-        return bool(self.edges)
-
-    def get_next_node(self, callable_output):
-        return self.edges
-
-
-@dataclass
-class MatcherNode(Node):
-    def __hash__(self):
-        return hash(self.name)
-
-    def get_output_data(self, callable_output):
-        return callable_output[1]
-
-    def get_next_node(self, callable_output):
-        return [self.edges[callable_output[0]]]
-
 
 _nodetype_to_node_type: Dict[Type[NodeType], Type[Node]] = {
     NodeType: Node,
     MatcherNodeType: MatcherNode
 }
-
-
-@dataclass
-class Graph:
-    nodes: Dict[str, Node]
 
 
 def convert_from_dot_graph(dot_graph: pydot.Graph):

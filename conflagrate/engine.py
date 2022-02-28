@@ -2,7 +2,8 @@ import asyncio
 from typing import Union
 
 from .asyncutils import BranchTracker
-from .parser import Graph, Node, parse
+from .graph import Graph, Node
+from .parser import parse
 
 __all__ = ['run']
 
