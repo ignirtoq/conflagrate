@@ -1,5 +1,4 @@
 from conflagrate import nodetype, run
-from typing import Tuple
 
 
 @nodetype('salutation')

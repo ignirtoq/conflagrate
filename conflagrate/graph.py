@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Callable, Dict, Tuple, Union
+from inspect import signature
+from typing import Callable, Dict, List, Tuple, Union
 
 from .asyncutils import make_awaitable
 from .controlflow import BranchType
@@ -19,6 +20,11 @@ class NodeType:
 
     def __call__(self, *args, **kwargs):
         return make_awaitable(self.callable, *args, **kwargs)
+
+    def get_dependencies(self) -> List[str]:
+        sig = signature(self.callable)
+        return [name for name, param in sig.parameters.items()
+                if param.kind == param.KEYWORD_ONLY]
 
 
 @dataclass
@@ -59,6 +65,9 @@ class Node:
     def get_next_node(self, callable_output):
         return self.edges
 
+    def get_dependencies(self) -> List[str]:
+        return self.nodetype.get_dependencies()
+
 
 @dataclass
 class MatcherNode(Node):
@@ -68,6 +77,7 @@ class MatcherNode(Node):
     matcher node selects a single branch from possible following paths based
     on a matching value.
     """
+
     def __hash__(self):
         return hash(self.name)
 

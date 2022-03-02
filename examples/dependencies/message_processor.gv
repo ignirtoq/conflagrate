@@ -1,0 +1,11 @@
+strict digraph {
+  node[shape=box]
+
+  listen[label="Listen on port",type=listener]
+  disk[label="Write to disk",type=write_to_disk]
+  screen[label="Print to screen",type=print_to_screen]
+
+  listen->listen
+  listen->disk
+  listen->screen
+}

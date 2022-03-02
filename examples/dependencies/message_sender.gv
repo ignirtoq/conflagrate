@@ -1,0 +1,8 @@
+strict digraph {
+  node[shape=box]
+
+  read[label="Read messages from file",type=read_messages_from_file]
+  send[label="Send to listener",type=send_to_listener]
+
+  read->send
+}

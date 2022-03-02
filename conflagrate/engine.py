@@ -1,7 +1,8 @@
 import asyncio
-from typing import Union
+from typing import Any, Dict, List, Union
 
 from .asyncutils import BranchTracker
+from .dependencies import DependencyCache
 from .graph import Graph, Node
 from .parser import parse
 
@@ -17,14 +18,27 @@ def convert_output_to_input(output_data):
         return output_data
 
 
+async def get_dependencies(
+        dependency_cache: DependencyCache,
+        dependency_names: List[str]
+) -> Dict[str, Any]:
+    return {
+        name: await dependency_cache.call_dependency(name)
+        for name in dependency_names
+    }
+
+
 async def execute_node(
         node: Node,
         branch_tracker: BranchTracker,
+        dependency_cache: DependencyCache,
         input_data=tuple()
 ) -> None:
     loop = asyncio.get_running_loop()
 
-    raw_node_output = await node(*input_data)
+    dependencies = await get_dependencies(dependency_cache,
+                                          node.get_dependencies())
+    raw_node_output = await node(*input_data, **dependencies)
 
     if not node.has_next_node():
         branch_tracker.remove_branch()
@@ -36,18 +50,20 @@ async def execute_node(
     next_nodes = node.get_next_node(raw_node_output)
     add_branch = False
     for next_node in next_nodes:
-        loop.create_task(execute_node(next_node, branch_tracker, input_data))
+        loop.create_task(execute_node(next_node, branch_tracker,
+                                      dependency_cache, input_data))
         if add_branch:
             branch_tracker.add_branch()
         add_branch = True
 
 
 async def start_graph(
-        first_node: Node
+        first_node: Node,
+        dependency_cache: DependencyCache
 ) -> None:
     loop = asyncio.get_running_loop()
     branch_tracker = BranchTracker()
-    loop.create_task(execute_node(first_node, branch_tracker))
+    loop.create_task(execute_node(first_node, branch_tracker, dependency_cache))
     await branch_tracker.wait()
 
 
@@ -57,11 +73,12 @@ def run(
 ) -> None:
     graph: Graph = parse(graph_filename)
     start_node: Union[Node, None] = graph.nodes[start_node_name]
+    dependency_cache = DependencyCache()
 
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
 
     try:
-        loop.run_until_complete(start_graph(start_node))
+        loop.run_until_complete(start_graph(start_node, dependency_cache))
     except KeyboardInterrupt:
         loop.close()
