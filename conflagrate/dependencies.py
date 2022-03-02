@@ -42,7 +42,7 @@ class DependencyCache:
         self._save_in_cache(name, result)
         return result
 
-    def _get_dependency(self, name):
+    def _get_dependency(self, name) -> Dependency:
         return self._dependency_registry[name]
 
     def _get_subdependencies(self, dependency: Dependency) -> List[Dependency]:
@@ -56,7 +56,12 @@ class DependencyCache:
         return self._dependency_cache[name]
 
     def _save_in_cache(self, name, value):
-        self._dependency_cache[name] = value
+        if self._is_cachable(name):
+            self._dependency_cache[name] = value
+
+    def _is_cachable(self, name):
+        return (self._get_dependency(name).cache_support is not
+                CacheSupport.NEVER_CACHE)
 
 
 _dependencies: Dict[str, Dependency] = {}
