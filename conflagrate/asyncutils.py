@@ -1,6 +1,9 @@
 import asyncio
+from enum import Enum, auto
 from functools import partial
 from typing import Callable
+
+__all__ = ['BlockingBehavior']
 
 
 class BranchTracker:
@@ -26,28 +29,56 @@ class BranchTracker:
         await self._future
 
 
-def make_awaitable(callable: Callable, *args, **kwargs):
-    """
-    Builds an awaitable object out of the callable and arguments.
-    If the callable is a coroutine function, it calls the function as usual.
-    If the callable is a regular function, it schedules it on the event loop
-    along with a future that is set with the result.  The future is returned
+class BlockingBehavior(Enum):
+    BLOCKING = auto()
+    NON_BLOCKING = auto()
 
-    :param callable: Function to be executed on the loop (coroutine or
+
+def ensure_awaitable(
+        function: Callable,
+        blocking_behavior: BlockingBehavior,
+        *args,
+        **kwargs
+):
+    if asyncio.iscoroutinefunction(function):
+        return function(*args, **kwargs)
+    else:
+        return make_awaitable(function, blocking_behavior, *args, **kwargs)
+
+
+async def make_awaitable(
+        function: Callable,
+        blocking_behavior: BlockingBehavior,
+        *args,
+        **kwargs
+):
+    """
+    Builds an awaitable object out of the function and arguments that returns
+    the actual return value of the object, unlike loop.call_soon().
+    If the callable is a blocking function (the default assumed), then it is
+    awaited with loop.run_in_executor() since that function *DOES* return the
+    return value.
+    If the callable is a non-blocking function, it schedules it on the event
+    loop along with a future that is set with the result.  The future is awaited
+    and the result is returned.
+
+    :param function: Function to be executed on the loop (coroutine or
     otherwise).
+    :param blocking_behavior: Flag to indicate whether the function is blocking
+    or non-blocking.
     :param args: Positional arguments for the function.
     :param kwargs: Keyword arguments for the function.
     :return: An awaitable object to retrieve the output of the function upon
     completion.
     """
-    if asyncio.iscoroutinefunction(callable):
-        return callable(*args, **kwargs)
-
     loop = asyncio.get_running_loop()
     future = asyncio.Future()
-    wrapped_function = partial(callable, *args, **kwargs)
+    wrapped_function = partial(function, *args, **kwargs)
+    if blocking_behavior is BlockingBehavior.BLOCKING:
+        return await loop.run_in_executor(None, wrapped_function)
+
     loop.call_soon(call_and_set_future, future, wrapped_function)
-    return future
+    return await future
 
 
 def call_and_set_future(

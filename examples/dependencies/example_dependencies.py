@@ -1,7 +1,7 @@
 import asyncio
 from typing import List
 
-from conflagrate import dependency, nodetype
+from conflagrate import BlockingBehavior, dependency, nodetype
 import json
 
 
@@ -31,7 +31,7 @@ def write_to_disk(message: str, *, config) -> None:
         f.write(f"{message}\n")
 
 
-@nodetype("print_to_screen")
+@nodetype("print_to_screen", blocking_behavior=BlockingBehavior.NON_BLOCKING)
 def print_to_screen(message: str) -> None:
     print(f"Message received: {message}", flush=True)
 

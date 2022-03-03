@@ -1,4 +1,5 @@
 from conflagrate import nodetype, run
+from conflagrate.asyncutils import BlockingBehavior
 
 
 @nodetype('salutation')
@@ -6,7 +7,7 @@ def salutation() -> str:
     return input('Hello, what is your name?\n')
 
 
-@nodetype('greeting')
+@nodetype('greeting', blocking_behavior=BlockingBehavior.NON_BLOCKING)
 def generic_greeting(name: str) -> None:
     print(f'Welcome {name}!')
 

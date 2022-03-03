@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from inspect import signature
 from typing import Callable, Dict, List, Tuple, Union
 
-from .asyncutils import make_awaitable
+from .asyncutils import BlockingBehavior, ensure_awaitable
 from .controlflow import BranchType
 
 
@@ -15,11 +15,13 @@ class NodeType:
     """
     callable: Callable
     branchtype: BranchType
+    blocking_behavior: BlockingBehavior
     input_datatype: Tuple
     output_datatype: Tuple
 
     def __call__(self, *args, **kwargs):
-        return make_awaitable(self.callable, *args, **kwargs)
+        return ensure_awaitable(self.callable, self.blocking_behavior,
+                                *args, **kwargs)
 
     def get_dependencies(self) -> List[str]:
         sig = signature(self.callable)

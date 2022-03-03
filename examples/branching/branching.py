@@ -1,4 +1,4 @@
-from conflagrate import BranchType, nodetype, run
+from conflagrate import BlockingBehavior, BranchType, nodetype, run
 from typing import Tuple
 
 
@@ -7,17 +7,17 @@ def salutation() -> str:
     return input('Hello, what is your name?\n')
 
 
-@nodetype('matcher', BranchType.matcher)
+@nodetype('matcher', BranchType.matcher, BlockingBehavior.NON_BLOCKING)
 def matcher(name: str) -> Tuple[str, Tuple[str]]:
     return '1' if name == 'Guido' else '2', (name,)
 
 
-@nodetype('generic_greeting')
+@nodetype('generic_greeting', blocking_behavior=BlockingBehavior.NON_BLOCKING)
 def generic_greeting(name: str) -> None:
     print(f'Welcome {name}!')
 
 
-@nodetype('special_greeting')
+@nodetype('special_greeting', blocking_behavior=BlockingBehavior.NON_BLOCKING)
 def special_greeting(name: str) -> None:
     print(f'All hail our overlord, {name}!')
 
