@@ -30,6 +30,14 @@ class BranchTracker:
 
 
 class BlockingBehavior(Enum):
+    """
+    Blocking behavior of the decorated node type definition function.
+    By default, all regular functions are assumed BLOCKING and all coroutine
+    functions are assumed NON_BLOCKING.
+
+    Only use the NON_BLOCKING value on functions that do not block the execution
+    thread in which they are called under ANY possible code path.
+    """
     BLOCKING = auto()
     NON_BLOCKING = auto()
 

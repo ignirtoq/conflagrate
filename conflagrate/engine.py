@@ -71,6 +71,14 @@ def run(
         graph_filename: str,
         start_node_name: str
 ) -> None:
+    """
+    Execute the graph defined in the file starting at the specified node.
+
+    :param graph_filename: path from the current working directory to the
+    graph file (currently only the Graphviz format is supported)
+    :param start_node_name: name of the node (NOT type) in the graph to start
+    :return: None
+    """
     graph: Graph = parse(graph_filename)
     start_node: Union[Node, None] = graph.nodes[start_node_name]
     dependency_cache = DependencyCache()

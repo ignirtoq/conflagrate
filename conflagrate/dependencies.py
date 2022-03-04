@@ -8,6 +8,19 @@ __all__ = ['CacheSupport', 'dependency']
 
 
 class CacheSupport(Enum):
+    """
+    Parameter describing the circumstances under which a dependency function's
+    output value can be cached.
+
+    CACHE_PERMANENTLY: (Default) Call the dependency function only once and
+        store the returned value forever.  This is useful for dependencies that
+        only need to be invoked once, such as reading a configuration file.
+    NEVER_CACHE: Call the dependency function each time it is needed by a node.
+        This includes as a direct dependency or in a hierarchy.  This is useful
+        for dependencies that provide a time-limited interface, such as
+        external API interfaces that have an authentication session that can
+        expire.
+    """
     CACHE_PERMANENTLY = auto()
     NEVER_CACHE = auto()
 
@@ -88,6 +101,37 @@ def get_recursive_dependencies(dependency: Dependency) -> List[Dependency]:
 
 
 def dependency(arg, /):
+    """
+    Declare the coroutine function is a dependency provider.
+
+    Some resources or interfaces are needed by few nodes that are not efficient
+    or elegant to pass through the whole graph as function arguments and return
+    values.  "Dependencies" are a mechanism to provide these specially used
+    externalities.
+
+    A node type that has an external dependency declares it in its function
+    signature as a keyword-only argument.  The name of that argument is then
+    matched to the name of a function decorated with the dependency decorator.
+    At the point that a node of that type is to be invoked, all of its
+    dependencies are fetched from the dependency cache.  If the dependency
+    function has never been called, it is called, and its return value is
+    stored in the cache and provided to the node through its keyword argument.
+
+    Dependencies can declare their own dependencies as regular
+    (positional-or-keyword) arguments in their own signature.  In this way,
+    data and interfaces common to multiple dependencies can be efficiently
+    shared.  For example, a "config()" dependency can load an entire
+    configuration specification from file, while another dependency
+    "username(config)" can provide just the username out of the configuration.
+
+    The dependency decorator can be provided a CacheSupport argument to specify
+    whether it can be cached.  See the CacheSupport class for details.
+
+    :param arg: When used as a decorator without arguments, this is the
+        decorated function.  When called with arguments this is the cache
+        support parameter.  See the CacheSupport enum.
+    :return: Decorated function.
+    """
     if inspect.isfunction(arg) and not inspect.iscoroutinefunction(arg):
         raise TypeError(f'dependency "{arg.__name__}" must be a coroutine '
                         f'function (must be defined with "async def")')

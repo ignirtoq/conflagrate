@@ -1,7 +1,7 @@
 import pydot
 from typing import Dict, List, Tuple, Type, Union
 
-from .controlflow import BranchType
+from .controlflow import BranchingStrategy
 from .graph import Graph, MatcherNode, MatcherNodeType, Node, NodeType
 from .registration import get_nodetypes
 
@@ -51,7 +51,7 @@ def add_edges_to_nodes(
     node_to_edge_dict: Dict[Node, Union[List[Node], Dict[str, Node]]] = {}
 
     for node in nodes.values():
-        if node.nodetype.branchtype == BranchType.matcher:
+        if node.nodetype.branching_strategy == BranchingStrategy.matcher:
             node_to_edge_dict[node] = {}
         else:
             node_to_edge_dict[node] = []
@@ -64,7 +64,7 @@ def add_edges_to_nodes(
         #                      f'match input type of "{destination.typename}"\n'
         #                      f'output: {source.nodetype.output_datatype}\n'
         #                      f'input: {destination.nodetype.input_datatype}')
-        if source.nodetype.branchtype == BranchType.matcher:
+        if source.nodetype.branching_strategy == BranchingStrategy.matcher:
             match_value = dot_edge.get(MATCH_VALUE_ATTRIBUTE)
             node_to_edge_dict[source][match_value] = destination
         else:

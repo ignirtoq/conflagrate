@@ -1,4 +1,4 @@
-from conflagrate import BlockingBehavior, BranchType, nodetype, run
+from conflagrate import BlockingBehavior, BranchingStrategy, nodetype, run
 from typing import Tuple
 
 
@@ -7,7 +7,7 @@ def salutation() -> str:
     return input('Hello, what is your name?\n')
 
 
-@nodetype('matcher', BranchType.matcher, BlockingBehavior.NON_BLOCKING)
+@nodetype('matcher', BranchingStrategy.matcher, BlockingBehavior.NON_BLOCKING)
 def matcher(name: str) -> Tuple[str, Tuple[str]]:
     return '1' if name == 'Guido' else '2', (name,)
 

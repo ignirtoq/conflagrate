@@ -2,7 +2,7 @@ import inspect
 
 from typing import Any, Callable, Dict, Tuple, Type
 
-from .controlflow import BranchType
+from .controlflow import BranchingStrategy
 from .graph import MatcherNodeType, NodeType
 from .asyncutils import BlockingBehavior
 
@@ -13,9 +13,32 @@ _node_types: Dict[str, NodeType] = {}
 
 def nodetype(
         name: str,
-        branchtype: BranchType = BranchType.simple,
+        branching_strategy: BranchingStrategy = BranchingStrategy.parallel,
         blocking_behavior: BlockingBehavior = BlockingBehavior.BLOCKING
 ) -> Callable:
+    """
+    Identify a function as the implementation of a type of node on graphs.
+
+    The node type is the connection between a control flow graph diagram and a
+    functional application.  As the application traverses the graph, at each
+    node it will call the associated node type function.  The positional
+    arguments of the function will be the return value of the previous node's
+    function (returned collection objects will be unpacked as separate
+    arguments).
+
+    A node type can be a regular function or a coroutine function.  Regular
+    functions should indicate if they are non-blocking, as otherwise they
+    will be called in a dedicated thread, which incurs some overhead.
+
+    :param name: The value of the "type" attribute annotated on nodes of the
+        graph for which this function should be called.
+    :param branching_strategy: How nodes following this node type should be
+        called in the case there are multiple choices.  See the
+        BranchingStrategy class for details and values.
+    :param blocking_behavior: Whether the function is blocking or non-blocking.
+        See the BlockingBehavior class for details and values.
+    :return: Decorated function.
+    """
     def decorator(function):
         blocking_flag = get_blocking_behavior(blocking_behavior, function)
         if name in _node_types:
@@ -25,7 +48,7 @@ def nodetype(
             get_input_output_datatypes_from_callable(function))
 
         node_type_class: Type[NodeType] = NodeType
-        if branchtype == BranchType.matcher:
+        if branching_strategy == BranchingStrategy.matcher:
             try:
                 output_datatypes = output_datatypes.__args__[1]
             except AttributeError:
@@ -33,7 +56,7 @@ def nodetype(
                                  'return value as a collection')
             node_type_class = MatcherNodeType
 
-        _node_types[name] = node_type_class(function, branchtype, blocking_flag,
+        _node_types[name] = node_type_class(function, branching_strategy, blocking_flag,
                                             input_datatypes, output_datatypes)
 
         return function

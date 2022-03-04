@@ -1,3 +1,4 @@
+from .__version__ import version as __version__
 from .asyncutils import *
 from .controlflow import *
 from .dependencies import *

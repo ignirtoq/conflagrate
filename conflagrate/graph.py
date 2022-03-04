@@ -3,7 +3,7 @@ from inspect import signature
 from typing import Callable, Dict, List, Tuple, Union
 
 from .asyncutils import BlockingBehavior, ensure_awaitable
-from .controlflow import BranchType
+from .controlflow import BranchingStrategy
 
 
 @dataclass
@@ -14,7 +14,7 @@ class NodeType:
     be associated with more than one node in a graph.
     """
     callable: Callable
-    branchtype: BranchType
+    branching_strategy: BranchingStrategy
     blocking_behavior: BlockingBehavior
     input_datatype: Tuple
     output_datatype: Tuple

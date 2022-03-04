@@ -9,11 +9,16 @@ Build applications from control flow graphs, rather than the other way around.
 
 💾 Installation
 --------------
-Currently `conflagrate` is only available from source:
+From [PyPI](https://pypi.org) using `pip`:
 
-`pip install .`
+`pip install conflagrate`
 
-See the examples directory for sample code.
+From source:
+
+`pip install .` or `python setup.py install`
+
+See the examples directory of the [GitHub
+repository](https://github.com/ignirtoq/conflagrate) for sample code.
 
 💻 Dependencies
 --------------

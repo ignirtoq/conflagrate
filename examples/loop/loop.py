@@ -1,4 +1,4 @@
-from conflagrate import BlockingBehavior, BranchType, nodetype, run
+from conflagrate import BlockingBehavior, BranchingStrategy, nodetype, run
 from typing import Tuple
 
 
@@ -7,7 +7,7 @@ def get_directive() -> str:
     return input('Do you want to exit?\n')
 
 
-@nodetype('matcher', BranchType.matcher, BlockingBehavior.NON_BLOCKING)
+@nodetype('matcher', BranchingStrategy.matcher, BlockingBehavior.NON_BLOCKING)
 def exit_check(directive: str) -> Tuple[str, None]:
     exit_vals = {'y', 'Y', 'yes', 'Yes', 'YES'}
     return 'exit' if directive in exit_vals else 'continue', None
