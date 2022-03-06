@@ -36,18 +36,39 @@ async def execute_node(
 ) -> None:
     loop = asyncio.get_running_loop()
 
+    # Construct full input for the node.
+    # This is positional arguments created from the output of the previous node,
+    # as well as keyword arguments pulled from the dependency injector.
     dependencies = await get_dependencies(dependency_cache,
                                           node.get_dependencies())
-    raw_node_output = await node(*input_data, **dependencies)
 
-    if not node.has_next_node():
+    # Call the node.
+    try:
+        raw_node_output = await node(*input_data, **dependencies)
+    except Exception:
+        # Any exception skips everything below, so it effectively kills the
+        # branch.  We can't make any assumptions, so we can't handle the
+        # exception, except to keep track of the branch terminating.
+        branch_tracker.remove_branch()
+        raise
+
+    # Process the return value.
+    # The Matcher node requires the return value to have a certain form, and
+    # the value used for branch matching should not be passed to the next node.
+    output_data = node.get_output_data(raw_node_output)
+    next_nodes = node.get_next_node(raw_node_output)
+
+    if not next_nodes:
+        # With no following node, this branch ends, so remove it from the
+        # tracker to ensure the graph coroutine returns when all work is done.
         branch_tracker.remove_branch()
         return
 
-    output_data = node.get_output_data(raw_node_output)
+    # Prepare positional input arguments for the trailing node(s).
     input_data = convert_output_to_input(output_data)
 
-    next_nodes = node.get_next_node(raw_node_output)
+    # The first node kicked off is a continuation of this branch.
+    # The rest, if any, are new branches that need to be tracked.
     add_branch = False
     for next_node in next_nodes:
         loop.create_task(execute_node(next_node, branch_tracker,

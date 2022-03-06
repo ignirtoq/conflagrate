@@ -35,7 +35,7 @@ def convert_from_dot_node(
         nodetypes: Dict[str, NodeType]
 ) -> Node:
     name = dot_node.get_name()
-    typename = dot_node.get(NODE_TYPE_ATTRIBUTE)
+    typename = dot_node.get(NODE_TYPE_ATTRIBUTE).strip('"')
     try:
         nodetype: NodeType = nodetypes[typename]
     except KeyError:
@@ -59,11 +59,11 @@ def add_edges_to_nodes(
     for dot_edge in dot_edges:
         source, destination = get_source_destination_nodes_from_edge(
             dot_edge, nodes)
-        # if not check_input_output_datatypes_match(source, destination):
-        #     raise ValueError(f'output type of "{source.typename}" does not '
-        #                      f'match input type of "{destination.typename}"\n'
-        #                      f'output: {source.nodetype.output_datatype}\n'
-        #                      f'input: {destination.nodetype.input_datatype}')
+        # TODO: Check call signature compatibilities.
+        #   We want to fail-fast at parsing so the developer doesn't get
+        #   surprised when the application goes down a rarely used branch
+        #   and hits a TypeError due to incompatible signature.
+        #   This is non-trivial and needs care to do right.
         if source.nodetype.branching_strategy == BranchingStrategy.matcher:
             match_value = dot_edge.get(MATCH_VALUE_ATTRIBUTE)
             node_to_edge_dict[source][match_value] = destination
@@ -93,14 +93,6 @@ def get_source_destination_nodes_from_edge(
                          f'{destination_name}')
 
     return source, destination
-
-
-def check_input_output_datatypes_match(
-        source: Node,
-        destination: Node
-) -> bool:
-    return (source.nodetype.output_datatype ==
-            destination.nodetype.input_datatype)
 
 
 def parse(graph_filename):

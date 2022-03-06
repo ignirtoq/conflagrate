@@ -50,7 +50,7 @@ class Node:
     name: str
     typename: str
     nodetype: NodeType
-    edges: Union['Node', Dict[str, 'Node']] = field(default_factory=dict)
+    edges: Union[List['Node'], Dict[str, 'Node']] = field(default_factory=list)
 
     def __hash__(self):
         return hash(self.name)
@@ -60,9 +60,6 @@ class Node:
 
     def get_output_data(self, callable_output):
         return callable_output
-
-    def has_next_node(self):
-        return bool(self.edges)
 
     def get_next_node(self, callable_output):
         return self.edges

@@ -91,6 +91,11 @@ async def make_awaitable(
 
 def call_and_set_future(
         future: asyncio.Future,
-        callable: Callable
+        function: Callable
 ):
-    future.set_result(callable())
+    try:
+        return_value = function()
+    except Exception as e:
+        future.set_exception(e)
+    else:
+        future.set_result(return_value)
