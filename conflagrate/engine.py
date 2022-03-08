@@ -1,12 +1,33 @@
 import asyncio
-from typing import Any, Dict, List, Union
+import contextvars
+from enum import Enum, auto
+from typing import Any, Dict, List
 
 from .asyncutils import BranchTracker
 from .dependencies import DependencyCache
 from .graph import Graph, Node
 from .parser import parse
 
-__all__ = ['run']
+__all__ = ['run', 'run_graph']
+
+dependency_cache_ctx_var = contextvars.ContextVar("dependency_cache")
+
+
+class CacheUsage(Enum):
+    SHARED = auto()
+    INDEPENDENT = auto()
+
+
+def set_new_context_dependency_cache():
+    dependency_cache_ctx_var.set(DependencyCache())
+    return dependency_cache_ctx_var.get()
+
+
+def get_context_dependency_cache():
+    try:
+        return dependency_cache_ctx_var.get()
+    except LookupError:
+        return set_new_context_dependency_cache()
 
 
 def convert_output_to_input(output_data):
@@ -31,10 +52,10 @@ async def get_dependencies(
 async def execute_node(
         node: Node,
         branch_tracker: BranchTracker,
-        dependency_cache: DependencyCache,
         input_data=tuple()
 ) -> None:
     loop = asyncio.get_running_loop()
+    dependency_cache = get_context_dependency_cache()
 
     # Construct full input for the node.
     # This is positional arguments created from the output of the previous node,
@@ -71,8 +92,7 @@ async def execute_node(
     # The rest, if any, are new branches that need to be tracked.
     add_branch = False
     for next_node in next_nodes:
-        loop.create_task(execute_node(next_node, branch_tracker,
-                                      dependency_cache, input_data))
+        loop.create_task(execute_node(next_node, branch_tracker, input_data))
         if add_branch:
             branch_tracker.add_branch()
         add_branch = True
@@ -80,34 +100,56 @@ async def execute_node(
 
 async def start_graph(
         first_node: Node,
-        dependency_cache: DependencyCache
+        cache_usage: CacheUsage
 ) -> None:
     loop = asyncio.get_running_loop()
     branch_tracker = BranchTracker()
-    loop.create_task(execute_node(first_node, branch_tracker, dependency_cache))
+
+    if cache_usage == CacheUsage.INDEPENDENT:
+        set_new_context_dependency_cache()
+
+    loop.create_task(execute_node(first_node, branch_tracker))
     await branch_tracker.wait()
 
 
-def run(
+async def run_graph(
         graph_filename: str,
-        start_node_name: str
+        start_node_name: str,
+        cache_usage: CacheUsage = CacheUsage.SHARED
 ) -> None:
     """
     Execute the graph defined in the file starting at the specified node.
 
     :param graph_filename: path from the current working directory to the
-    graph file (currently only the Graphviz format is supported)
+        graph file (currently only the Graphviz format is supported)
     :param start_node_name: name of the node (NOT type) in the graph to start
+    :param cache_usage: if run from within another graph, whether to share the
+        dependency cache with the parent graph or use its own
     :return: None
     """
-    graph: Graph = parse(graph_filename)
-    start_node: Union[Node, None] = graph.nodes[start_node_name]
-    dependency_cache = DependencyCache()
+    loop = asyncio.get_running_loop()
+    graph: Graph = await loop.run_in_executor(None, parse, graph_filename)
+    start_node: Node = graph.nodes[start_node_name]
 
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+    await loop.create_task(start_graph(start_node, cache_usage))
 
+
+def run(
+        graph_filename: str,
+        start_node_name: str,
+        cache_usage: CacheUsage = CacheUsage.SHARED
+) -> None:
+    """
+    Execute the graph defined in the file starting at the specified node.
+
+    :param graph_filename: path from the current working directory to the
+        graph file (currently only the Graphviz format is supported)
+    :param start_node_name: name of the node (NOT type) in the graph to start
+    :param cache_usage: if run from within another graph, whether to share the
+        dependency cache with the parent graph or use its own
+    :return: None
+    """
     try:
-        loop.run_until_complete(start_graph(start_node, dependency_cache))
+        asyncio.run(run_graph(graph_filename, start_node_name, cache_usage))
     except KeyboardInterrupt:
-        loop.close()
+        pass
