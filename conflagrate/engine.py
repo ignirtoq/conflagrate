@@ -1,12 +1,13 @@
 import asyncio
 import contextvars
 from enum import Enum, auto
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .asyncutils import BranchTracker
 from .dependencies import DependencyCache
 from .graph import Graph, Node
-from .parser import parse
+from .parse.graphviz import parse
+from .parse.native import Graph
 
 __all__ = ['run', 'run_graph']
 
@@ -113,43 +114,46 @@ async def start_graph(
 
 
 async def run_graph(
-        graph_filename: str,
+        graph: Union[str, Graph],
         start_node_name: str,
         cache_usage: CacheUsage = CacheUsage.SHARED
 ) -> None:
     """
     Execute the graph defined in the file starting at the specified node.
 
-    :param graph_filename: path from the current working directory to the
-        graph file (currently only the Graphviz format is supported)
+    :param graph: path from the current working directory to a graph file
+        (currently only the Graphviz format is supported) OR a native graph
+        class object
     :param start_node_name: name of the node (NOT type) in the graph to start
     :param cache_usage: if run from within another graph, whether to share the
         dependency cache with the parent graph or use its own
     :return: None
     """
     loop = asyncio.get_running_loop()
-    graph: Graph = await loop.run_in_executor(None, parse, graph_filename)
+    if isinstance(graph, str):
+        graph: Graph = await loop.run_in_executor(None, parse, graph)
     start_node: Node = graph.nodes[start_node_name]
 
     await loop.create_task(start_graph(start_node, cache_usage))
 
 
 def run(
-        graph_filename: str,
+        graph: Union[str, Graph],
         start_node_name: str,
         cache_usage: CacheUsage = CacheUsage.SHARED
 ) -> None:
     """
     Execute the graph defined in the file starting at the specified node.
 
-    :param graph_filename: path from the current working directory to the
-        graph file (currently only the Graphviz format is supported)
+    :param graph: path from the current working directory to a graph file
+        (currently only the Graphviz format is supported) OR a native graph
+        class object
     :param start_node_name: name of the node (NOT type) in the graph to start
     :param cache_usage: if run from within another graph, whether to share the
         dependency cache with the parent graph or use its own
     :return: None
     """
     try:
-        asyncio.run(run_graph(graph_filename, start_node_name, cache_usage))
+        asyncio.run(run_graph(graph, start_node_name, cache_usage))
     except KeyboardInterrupt:
         pass

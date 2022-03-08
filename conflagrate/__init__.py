@@ -3,6 +3,7 @@ from .asyncutils import *
 from .controlflow import *
 from .dependencies import *
 from .engine import *
+from .parse import *
 from .registration import *
 
 __all__ = (
@@ -10,5 +11,6 @@ __all__ = (
     controlflow.__all__ +
     dependencies.__all__ +
     engine.__all__ +
+    parse.__all__ +
     registration.__all__
 )

@@ -1,9 +1,9 @@
 import pydot
 from typing import Dict, List, Tuple, Type, Union
 
-from .controlflow import BranchingStrategy
-from .graph import Graph, MatcherNode, MatcherNodeType, Node, NodeType
-from .registration import get_nodetypes
+from ..controlflow import BranchingStrategy
+from ..graph import Graph, MatcherNode, MatcherNodeType, Node, NodeType
+from ..registration import get_nodetypes
 
 MATCH_VALUE_ATTRIBUTE = 'value'
 NODE_TYPE_ATTRIBUTE = 'type'
