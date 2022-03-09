@@ -81,7 +81,8 @@ class MatcherNode(Node):
         return hash(self.name)
 
     def get_output_data(self, callable_output):
-        return callable_output[1]
+        output = *callable_output[1:],
+        return output[0] if len(output) == 1 else output
 
     def get_next_node(self, callable_output):
         try:

@@ -8,8 +8,8 @@ def salutation() -> str:
 
 
 @nodetype('matcher', BranchingStrategy.matcher, BlockingBehavior.NON_BLOCKING)
-def matcher(name: str) -> Tuple[str, Tuple[str]]:
-    return '1' if name == 'Guido' else '2', (name,)
+def matcher(name: str) -> Tuple[str, str]:
+    return '1' if name == 'Guido' else '2', name
 
 
 @nodetype('generic_greeting', blocking_behavior=BlockingBehavior.NON_BLOCKING)
