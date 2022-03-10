@@ -34,6 +34,16 @@ def matcher_node():
     return MatcherNode('matcher_test', 'match_test', mock.AsyncMock())
 
 
+@pytest.fixture
+def mock_node():
+    return mock.AsyncMock()
+
+
+@pytest.fixture
+def graph():
+    return mock.MagicMock()
+
+
 def test_convert_output_to_input_None():
     input_data = convert_output_to_input(None)
     assert input_data == ()
@@ -133,34 +143,49 @@ async def test_execute_node_two_next_nodes(node, mock_branch_tracker):
 
 
 @pytest.mark.asyncio
-async def test_start_graph_shared_cache():
+async def test_start_graph_shared_cache(graph):
     outer_dependency_cache = get_context_dependency_cache()
     inner_dependency_cache = []
 
-    def mock_execute(_, branch_tracker: BranchTracker):
+    def mock_execute(_, branch_tracker: BranchTracker, __):
         inner_dependency_cache.append(get_context_dependency_cache())
         branch_tracker.remove_branch()
 
     mock_execute = mock.AsyncMock(side_effect=mock_execute)
-    with mock.patch('conflagrate.engine.parse'), (
-            mock.patch('conflagrate.engine.execute_node', mock_execute)):
-        await run_graph('test', 'test')
+    with mock.patch('conflagrate.engine.execute_node', mock_execute):
+        await run_graph(graph, 'test')
 
     assert outer_dependency_cache == inner_dependency_cache[0]
 
 
 @pytest.mark.asyncio
-async def test_start_graph_independent_cache():
+async def test_start_graph_independent_cache(graph):
     outer_dependency_cache = get_context_dependency_cache()
     inner_dependency_cache = []
 
-    def mock_execute(_, branch_tracker: BranchTracker):
+    def mock_execute(_, branch_tracker: BranchTracker, __):
         inner_dependency_cache.append(get_context_dependency_cache())
         branch_tracker.remove_branch()
 
     mock_execute = mock.AsyncMock(side_effect=mock_execute)
-    with mock.patch('conflagrate.engine.parse'), (
-            mock.patch('conflagrate.engine.execute_node', mock_execute)):
-        await run_graph('test', 'test', CacheUsage.INDEPENDENT)
+    with mock.patch('conflagrate.engine.execute_node', mock_execute):
+        await run_graph(graph, 'test', CacheUsage.INDEPENDENT)
 
     assert outer_dependency_cache != inner_dependency_cache[0]
+
+
+@pytest.mark.asyncio
+async def test_graph_output(branch_tracker, graph, mock_node):
+    expected_return_value = object()
+    graph.nodes.__getitem__.return_value = mock_node
+    mock_node.get_dependencies = mock.Mock(return_value=())
+    mock_node.get_output_data = mock.Mock(return_value=expected_return_value)
+    mock_node.get_next_node = mock.Mock(
+        return_value=[],
+        side_effect=lambda *_, **__:
+        branch_tracker.set_last_node_return_value(expected_return_value)
+    )
+
+    actual_return_value = await run_graph(graph, 'any')
+
+    assert actual_return_value == expected_return_value

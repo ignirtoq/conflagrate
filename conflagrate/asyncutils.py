@@ -10,6 +10,7 @@ class BranchTracker:
     def __init__(self, num_starting_branches=1):
         self.branches = num_starting_branches
         self._future = asyncio.Future()
+        self._last_node_return_value = None
 
     def _check_done(self):
         if self._future.done():
@@ -23,10 +24,16 @@ class BranchTracker:
         self._check_done()
         self.branches -= 1
         if self.branches <= 0:
-            self._future.set_result(None)
+            if isinstance(self._last_node_return_value, Exception):
+                self._future.set_exception(self._last_node_return_value)
+            else:
+                self._future.set_result(self._last_node_return_value)
+
+    def set_last_node_return_value(self, value):
+        self._last_node_return_value = value
 
     async def wait(self):
-        await self._future
+        return await self._future
 
 
 class BlockingBehavior(Enum):
