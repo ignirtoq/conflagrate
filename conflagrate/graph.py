@@ -88,7 +88,10 @@ class MatcherNode(Node):
         try:
             return [self.edges[callable_output[0]]]
         except KeyError:
-            return []
+            try:
+                return [self.edges[None]]
+            except KeyError:
+                return []
 
 
 @dataclass

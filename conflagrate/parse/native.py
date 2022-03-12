@@ -84,7 +84,7 @@ def add_edges_to_nodes(nodes, display_nodes):
         for edge in display_node._edges:
             destination = nodes[edge.destination._name]
             if isinstance(node, ExecutionMatcherNode):
-                node.edges[edge.attributes['value']] = destination
+                node.edges[edge.attributes.get('value')] = destination
             else:
                 node.edges.append(destination)
 
